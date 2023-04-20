@@ -1,14 +1,15 @@
-# Project
+# JSI for Node-API
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+This project implements JSI for Node-API.
 
-As the maintainer of this project, please make a few updates:
+[Node-API](https://nodejs.org/api/n-api.html) is an ABI safe API defined by Node.JS project.
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+[JSI](https://github.com/facebook/hermes/tree/main/API/jsi/jsi) is a C++ API used
+by [React Native](https://github.com/facebook/react-native) to abstract access to
+JavaScript engines.
+
+The JSI implementation on top of Node-API enables use of JS engines 
+that implement Node-API with React Native.
 
 ## Contributing
 

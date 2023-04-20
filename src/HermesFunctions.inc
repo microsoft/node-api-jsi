@@ -1,0 +1,34 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+// The Hermes functions sorted alphabetically
+
+#ifndef HERMES_FUNC
+#error "HERMES_FUNC must exist before including this file"
+#endif
+
+HERMES_FUNC(hermes_create_runtime)
+HERMES_FUNC(hermes_delete_runtime)
+HERMES_FUNC(hermes_get_node_api_env)
+HERMES_FUNC(hermes_dump_crash_data)
+HERMES_FUNC(hermes_sampling_profiler_enable)
+HERMES_FUNC(hermes_sampling_profiler_disable)
+HERMES_FUNC(hermes_sampling_profiler_add)
+HERMES_FUNC(hermes_sampling_profiler_remove)
+HERMES_FUNC(hermes_sampling_profiler_dump_to_file)
+HERMES_FUNC(hermes_create_config)
+HERMES_FUNC(hermes_delete_config)
+HERMES_FUNC(hermes_config_enable_default_crash_handler)
+HERMES_FUNC(hermes_config_enable_debugger)
+HERMES_FUNC(hermes_config_set_debugger_runtime_name)
+HERMES_FUNC(hermes_config_set_debugger_port)
+HERMES_FUNC(hermes_config_set_debugger_break_on_start)
+HERMES_FUNC(hermes_config_set_task_runner)
+HERMES_FUNC(hermes_config_set_script_cache)
+HERMES_FUNC(hermes_set_inspector)
+HERMES_FUNC(hermes_create_local_connection)
+HERMES_FUNC(hermes_delete_local_connection)
+HERMES_FUNC(hermes_local_connection_send_message)
+HERMES_FUNC(hermes_local_connection_disconnect)
+
+#undef HERMES_FUNC
