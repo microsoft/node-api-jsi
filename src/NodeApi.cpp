@@ -43,12 +43,14 @@ struct NodeApiNames {
 void loadPreparedScriptFuncs() {
   NodeApi *current = NodeApi::current();
   bool useDefault = false;
-#define NODE_API_PREPARED_SCRIPT(func)                                                                         \
-  decltype(func) *loaded_##func = reinterpret_cast<decltype(func) *>(current->getFuncPtr(NodeApiNames::func)); \
+#define NODE_API_PREPARED_SCRIPT(func)                                                                             \
+  decltype(::func) *loaded_##func = reinterpret_cast<decltype(::func) *>(current->getFuncPtr(NodeApiNames::func)); \
   useDefault = useDefault || loaded_##func == nullptr;
 #include "NodeApiFunctions.inc"
-#define NODE_API_PREPARED_SCRIPT(func) \
-  const_cast<decltype(func) *>(current->func) = useDefault ? &default_##func : loaded_##func;
+#define NODE_API_PREPARED_SCRIPT(func)                                                        \
+  size_t offset_##func = offsetof(NodeApi, func);                                             \
+  *reinterpret_cast<decltype(::func) **>(reinterpret_cast<char *>(current) + offset_##func) = \
+      useDefault ? &default_##func : loaded_##func;
 #include "NodeApiFunctions.inc"
 }
 

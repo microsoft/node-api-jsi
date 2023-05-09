@@ -447,6 +447,10 @@ class NodeApiJsiRuntime : public jsi::Runtime {
       return ptr_;
     }
 
+    NodeApiRefCountedPointerValue *release() {
+      return std::exchange(ptr_, nullptr);
+    }
+
     explicit operator bool() const {
       return ptr_ != nullptr;
     }
@@ -1063,7 +1067,7 @@ inline uint32_t constexpr maxCharsPerDigitInRadix(int32_t radix) {
   // With minNumBitsPerChar being the lower bound estimate of how many bits each
   // char can represent, the upper bound of how many chars "fit" in a bigint
   // digit is ceil(sizeofInBits(bigint digit) / minNumBitsPerChar).
-  uint32_t numCharsPerDigits = sizeof(uint64_t) / (1 << minNumBitsPerChar);
+  uint32_t numCharsPerDigits = static_cast<uint32_t>(sizeof(uint64_t)) / (1 << minNumBitsPerChar);
 
   return numCharsPerDigits;
 }
@@ -1091,7 +1095,7 @@ jsi::String NodeApiJsiRuntime::bigintToString(const jsi::BigInt &bigint, int32_t
   napi_value value = getNodeApiValue(bigint);
   size_t wordCount{};
   CHECK_NAPI(nodeApi_->napi_get_value_bigint_words(env_, value, nullptr, &wordCount, nullptr));
-  uint64_t stackWords[8];
+  uint64_t stackWords[8]{};
   std::unique_ptr<uint64_t[]> heapWords;
   uint64_t *words = stackWords;
   if (wordCount > std::size(stackWords)) {
@@ -1173,9 +1177,9 @@ jsi::String NodeApiJsiRuntime::bigintToString(const jsi::BigInt &bigint, int32_t
     }
 
     if (remainder < 10) {
-      digits.push_back('0' + remainder);
+      digits.push_back(static_cast<char>('0' + remainder));
     } else {
-      digits.push_back('a' + remainder - 10);
+      digits.push_back(static_cast<char>('a' + remainder - 10));
     }
   } while (count > 2 || word0 != 0);
 
@@ -1266,7 +1270,7 @@ void NodeApiJsiRuntime::setNativeState(const jsi::Object &obj, std::shared_ptr<j
         env_,
         getNodeApiValue(obj),
         new std::shared_ptr<jsi::NativeState>(std::move(state)),
-        [](napi_env env, void *data, void * /*finalize_hint*/) {
+        [](napi_env /*env*/, void *data, void * /*finalize_hint*/) {
           std::shared_ptr<jsi::NativeState> oldState{
               std::move(*reinterpret_cast<std::shared_ptr<jsi::NativeState> *>(data))};
         },
@@ -1559,7 +1563,7 @@ void NodeApiJsiRuntime::NodeApiRefCountedPointerValue::invalidate() noexcept {
 }
 
 NodeApiJsiRuntime::NodeApiRefCountedPointerValue *NodeApiJsiRuntime::NodeApiRefCountedPointerValue::clone(
-    NodeApiJsiRuntime &runtime) const {
+    NodeApiJsiRuntime & /*runtime*/) const {
   incRefCount();
   return const_cast<NodeApiRefCountedPointerValue *>(this);
 }
@@ -1773,7 +1777,7 @@ size_t NodeApiJsiRuntime::JsiValueViewArgs::size() const noexcept {
 //=====================================================================================================================
 
 // TODO: account for symbol
-NodeApiJsiRuntime::PropNameIDView::PropNameIDView(NodeApiJsiRuntime *runtime, napi_value propertyId) noexcept
+NodeApiJsiRuntime::PropNameIDView::PropNameIDView(NodeApiJsiRuntime * /*runtime*/, napi_value propertyId) noexcept
     : propertyId_{make<jsi::PropNameID>(new(std::addressof(
           pointerStore_)) NodeApiStackOnlyPointerValue(propertyId, NodeApiPointerValueKind::StringPropNameID))} {}
 
@@ -1852,7 +1856,7 @@ void NodeApiJsiRuntime::rewriteErrorMessage(napi_value jsError) const {
   // Make sure that the call stack has the current URL
   if (!sourceURL_.empty()) {
     napi_value stack{};
-    napi_status status = nodeApi_->napi_get_property(env_, jsError, getNodeApiValue(propertyId_.stack), &stack);
+    status = nodeApi_->napi_get_property(env_, jsError, getNodeApiValue(propertyId_.stack), &stack);
     if (status != napi_ok) {
       // If the 'stack' property getter throws, then we clear the exception and ignore it.
       napi_value ignoreJSError{};
@@ -2624,7 +2628,7 @@ void NodeApiJsiRuntime::popPointerValueScope() noexcept {
   auto beginIterator = stackValues_.begin() + newStackSize;
   stackScopes_.pop_back();
   std::for_each(beginIterator, stackValues_.end(), [this](NodeApiStackValueHolder &holder) {
-    holder->convertToNodeApiRef(*this);
+    holder.release()->convertToNodeApiRef(*this);
   });
   stackValues_.resize(newStackSize);
 }
@@ -2649,7 +2653,7 @@ void NodeApiJsiRuntime::collectUnusedRefs() noexcept {
   };
   auto beginIterator = std::partition(refs_.begin(), refs_.end(), usedByJsiPointer);
   std::for_each(beginIterator, refs_.end(), [this](NodeApiRefHolder &holder) {
-    NodeApiRefCountedPointerValue::deleteNodeApiRef(holder.get(), *this);
+    NodeApiRefCountedPointerValue::deleteNodeApiRef(holder.release(), *this);
   });
   refs_.resize(beginIterator - refs_.begin());
 }
