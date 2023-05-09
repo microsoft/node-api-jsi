@@ -6,9 +6,10 @@
 #define SRC_NODEAPIJSIRUNTIME_H_
 
 #include <jsi/jsi.h>
-#include <napi/js_native_ext_api.h>
 #include <functional>
+#include <memory>
 #include "NodeApi.h"
+#include "js_native_api.h"
 
 namespace Microsoft::NodeApiJsi {
 

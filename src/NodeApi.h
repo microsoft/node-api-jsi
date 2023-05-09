@@ -5,7 +5,7 @@
 #ifndef SRC_NODEAPI_H_
 #define SRC_NODEAPI_H_
 
-#include <napi/js_native_ext_api.h>
+#include <js_native_ext_api.h>
 
 namespace Microsoft::NodeApiJsi {
 

@@ -5,7 +5,7 @@
 #ifndef SRC_HERMESAPI_H_
 #define SRC_HERMESAPI_H_
 
-#include <napi/hermes_api.h>
+#include <hermes/hermes_api.h>
 #include "NodeApi.h"
 
 namespace Microsoft::NodeApiJsi {
@@ -42,7 +42,7 @@ class HermesApi : public NodeApi {
   };
 
 #define HERMES_FUNC(func) decltype(::func) *const func;
-#include "HermesFunctions.inc"
+#include "HermesApiFunctions.inc"
 
  private:
   static thread_local HermesApi *current_;

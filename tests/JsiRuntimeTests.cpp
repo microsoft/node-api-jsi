@@ -3,7 +3,7 @@
 
 #include <HermesApi.h>
 #include <NodeApiJsiRuntime.h>
-#include <napi/hermes_api.h>
+#include <hermes/hermes_api.h>
 #include <vector>
 #include "../jsi/test/testlib.h"
 

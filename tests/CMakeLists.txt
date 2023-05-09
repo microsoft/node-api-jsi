@@ -24,7 +24,7 @@ add_executable(jsi_tests
   "JsiRuntimeTests.cpp"
 )
 
-target_include_directories(jsi_tests PUBLIC .. ../src)
+target_include_directories(jsi_tests PUBLIC .. ../src ../node-api)
 target_link_libraries(jsi_tests PUBLIC gtest_main)
 
 find_program(NUGET_EXE NAMES nuget)
@@ -36,11 +36,13 @@ endif()
 exec_program(${NUGET_EXE}
   ARGS
     install "Microsoft.JavaScript.Hermes"
-    -Version 0.1.5
+    -Version 0.1.9
     -ExcludeVersion
     -OutputDirectory ${CMAKE_BINARY_DIR}/packages)
 
 target_link_libraries(jsi_tests PRIVATE ${CMAKE_BINARY_DIR}/packages/Microsoft.JavaScript.Hermes/build/native/Microsoft.JavaScript.Hermes.targets)
+
+enable_testing()
 
 add_test(
   NAME jsi_tests
