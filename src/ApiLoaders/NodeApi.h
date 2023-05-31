@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 #pragma once
-#ifndef SRC_NODEAPI_H_
-#define SRC_NODEAPI_H_
+#ifndef APILOADERS_NODEAPI_H_
+#define APILOADERS_NODEAPI_H_
 
-#include <js_native_ext_api.h>
+#include <js_native_api.h>
 
 namespace Microsoft::NodeApiJsi {
 
@@ -116,9 +116,7 @@ class NodeApi : public DelayLoadedApi {
 
  public:
 #define NODE_API_FUNC(func) decltype(::func) *const func;
-#define NODE_API_EXT_FUNC NODE_API_FUNC
-#define NODE_API_PREPARED_SCRIPT NODE_API_FUNC
-#include "NodeApiFunctions.inc"
+#include "NodeApi.inc"
 
  private:
   static thread_local NodeApi *current_;
@@ -126,4 +124,4 @@ class NodeApi : public DelayLoadedApi {
 
 } // namespace Microsoft::NodeApiJsi
 
-#endif // !SRC_NODEAPI_H_
+#endif // !APILOADERS_NODEAPI_H_

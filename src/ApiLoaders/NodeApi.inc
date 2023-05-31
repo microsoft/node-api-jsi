@@ -2,15 +2,7 @@
 // Licensed under the MIT License.
 
 #ifndef NODE_API_FUNC
-#define NODE_API_FUNC(func) 
-#endif
-
-#ifndef NODE_API_EXT_FUNC
-#define NODE_API_EXT_FUNC(func) 
-#endif
-
-#ifndef NODE_API_PREPARED_SCRIPT
-#define NODE_API_PREPARED_SCRIPT(func) 
+#define NODE_API_FUNC(func)
 #endif
 
 // The Node-API functions sorted alphabetically.
@@ -130,16 +122,4 @@ NODE_API_FUNC(napi_typeof)
 NODE_API_FUNC(napi_unwrap)
 NODE_API_FUNC(napi_wrap)
 
-// The Node-API extensions functions sorted alphabetically.
-NODE_API_EXT_FUNC(napi_ext_drain_microtasks)
-NODE_API_EXT_FUNC(napi_ext_get_description)
-NODE_API_EXT_FUNC(napi_ext_is_inspectable)
-
-// The Node-API extensions functions for prepared script.
-NODE_API_PREPARED_SCRIPT(napi_ext_create_prepared_script)
-NODE_API_PREPARED_SCRIPT(napi_ext_delete_prepared_script)
-NODE_API_PREPARED_SCRIPT(napi_ext_prepared_script_run)
-
 #undef NODE_API_FUNC
-#undef NODE_API_EXT_FUNC
-#undef NODE_API_PREPARED_SCRIPT

@@ -9,7 +9,7 @@ namespace {
 
 struct HermesApiNames {
 #define HERMES_FUNC(func) static constexpr const char func[] = #func;
-#include "HermesApiFunctions.inc"
+#include "HermesApi.inc"
 };
 
 } // namespace
@@ -17,10 +17,10 @@ struct HermesApiNames {
 thread_local HermesApi *HermesApi::current_{};
 
 HermesApi::HermesApi(IFuncResolver *funcResolver)
-    : NodeApi(funcResolver)
+    : JSRuntimeApi(funcResolver)
 #define HERMES_FUNC(func) \
   , func(&ApiFuncResolver<NodeApi, decltype(::func) *, HermesApiNames::func, offsetof(HermesApi, func)>::stub)
-#include "HermesApiFunctions.inc"
+#include "HermesApi.inc"
 {
 }
 
