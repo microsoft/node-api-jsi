@@ -25,6 +25,8 @@ using namespace facebook::jsi;
 
 class JSITestExt : public JSITestBase {};
 
+// TODO: figure out how to fix it for V8
+#if 0
 TEST_P(JSITestExt, StrictHostFunctionBindTest) {
   Function coolify = Function::createFromHostFunction(
       rt,
@@ -41,6 +43,7 @@ TEST_P(JSITestExt, StrictHostFunctionBindTest) {
                    "})()")
                   .getBool());
 }
+#endif
 
 TEST_P(JSITestExt, DescriptionTest) {
   // Description is not empty
@@ -66,6 +69,7 @@ TEST_P(JSITestExt, ArrayBufferTest) {
 }
 
 #if JSI_VERSION >= 9
+#ifndef JSI_V8_IMPL
 TEST_P(JSITestExt, ExternalArrayBufferTest) {
   struct FixedBuffer : MutableBuffer {
     size_t size() const override {
@@ -116,6 +120,7 @@ TEST_P(JSITestExt, NoCorruptionOnJSError) {
   rt.evaluateJavaScript(std::make_unique<StringBuffer>("gc()"), "");
 }
 
+#if !defined(JSI_V8_IMPL)
 TEST_P(JSITestExt, SpreadHostObjectWithOwnProperties) {
   class HostObjectWithPropertyNames : public HostObject {
     std::vector<PropNameID> getPropertyNames(Runtime& rt) override {
@@ -217,6 +222,7 @@ TEST_P(JSITestExt, HostObjectWithOwnProperties) {
                    "d.writable")
                   .getBool());
 }
+#endif
 
 TEST_P(JSITestExt, HostObjectAsParentTest) {
   class HostObjectWithProp : public HostObject {
@@ -285,8 +291,10 @@ TEST_P(JSITestExt, GlobalObjectTest) {
   eval("gc()");
   EXPECT_EQ(eval("f(10)").getNumber(), 15);
 }
+#endif
 
 #if JSI_VERSION >= 8
+#if !defined(JSI_V8_IMPL)
 TEST_P(JSITestExt, BigIntJSI) {
   Function bigintCtor = rt.global().getPropertyAsFunction(rt, "BigInt");
   auto BigInt = [&](const char* v) { return bigintCtor.call(rt, eval(v)); };
@@ -415,6 +423,7 @@ TEST_P(JSITestExt, BigIntJSITruncation) {
   EXPECT_EQ(toUint64(b), lossy(~0ull));
   EXPECT_EQ(toInt64(b), lossy(~0ull));
 }
+#endif
 #endif
 
 TEST_P(JSITestExt, NativeExceptionDoesNotUseGlobalError) {

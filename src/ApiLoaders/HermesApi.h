@@ -2,15 +2,15 @@
 // Licensed under the MIT License.
 
 #pragma once
-#ifndef SRC_HERMESAPI_H_
-#define SRC_HERMESAPI_H_
+#ifndef APILOADERS_HERMESAPI_H_
+#define APILOADERS_HERMESAPI_H_
 
 #include <hermes/hermes_api.h>
-#include "NodeApi.h"
+#include "JSRuntimeApi.h"
 
 namespace Microsoft::NodeApiJsi {
 
-class HermesApi : public NodeApi {
+class HermesApi : public JSRuntimeApi {
  public:
   HermesApi(IFuncResolver *funcResolver);
 
@@ -19,17 +19,17 @@ class HermesApi : public NodeApi {
   }
 
   static void setCurrent(HermesApi *current) noexcept {
-    NodeApi::setCurrent(current);
+    JSRuntimeApi::setCurrent(current);
     current_ = current;
   }
 
   static HermesApi *fromLib();
 
-  class Scope : public NodeApi::Scope {
+  class Scope : public JSRuntimeApi::Scope {
    public:
     Scope() : Scope(HermesApi::fromLib()) {}
 
-    Scope(HermesApi *hermesApi) : NodeApi::Scope(hermesApi), prevHermesApi_(HermesApi::current_) {
+    Scope(HermesApi *hermesApi) : JSRuntimeApi::Scope(hermesApi), prevHermesApi_(HermesApi::current_) {
       HermesApi::current_ = hermesApi;
     }
 
@@ -41,8 +41,9 @@ class HermesApi : public NodeApi {
     HermesApi *prevHermesApi_;
   };
 
+ public:
 #define HERMES_FUNC(func) decltype(::func) *const func;
-#include "HermesApiFunctions.inc"
+#include "HermesApi.inc"
 
  private:
   static thread_local HermesApi *current_;
@@ -50,4 +51,4 @@ class HermesApi : public NodeApi {
 
 } // namespace Microsoft::NodeApiJsi
 
-#endif // !SRC_HERMESAPI_H_
+#endif // !APILOADERS_HERMESAPI_H_
