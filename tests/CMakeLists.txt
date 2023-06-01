@@ -2,18 +2,18 @@
 # Licensed under the MIT License.
 
 add_executable(jsi_tests
-  "../jsi/test/testlib.h"
-  "../jsi/test/testlib.cpp"
-  "../jsi/test/testlib_ext.cpp"
-  "../jsi/decorator.h"
-  "../jsi/instrumentation.h"
-  "../jsi/jsi-inl.h"
-  "../jsi/jsi.cpp"
-  "../jsi/jsi.h"
-  "../jsi/jsilib-posix.cpp"
-  "../jsi/jsilib-windows.cpp"
-  "../jsi/jsilib.h"
-  "../jsi/threadsafe.h"
+  "../jsi/jsi/test/testlib.h"
+  "../jsi/jsi/test/testlib.cpp"
+  "../jsi/jsi/test/testlib_ext.cpp"
+  "../jsi/jsi/decorator.h"
+  "../jsi/jsi/instrumentation.h"
+  "../jsi/jsi/jsi-inl.h"
+  "../jsi/jsi/jsi.cpp"
+  "../jsi/jsi/jsi.h"
+  "../jsi/jsi/jsilib-posix.cpp"
+  "../jsi/jsi/jsilib-windows.cpp"
+  "../jsi/jsi/jsilib.h"
+  "../jsi/jsi/threadsafe.h"
   "../src/ApiLoaders/HermesApi.cpp"
   "../src/ApiLoaders/HermesApi.h"
   "../src/ApiLoaders/JSRuntimeApi.cpp"
@@ -28,7 +28,7 @@ add_executable(jsi_tests
   "JsiRuntimeTests.cpp"
 )
 
-target_include_directories(jsi_tests PUBLIC .. ../src ../node-api)
+target_include_directories(jsi_tests PUBLIC ../jsi ../src ../node-api)
 target_link_libraries(jsi_tests PUBLIC gtest_main)
 
 find_program(NUGET_EXE NAMES nuget)
