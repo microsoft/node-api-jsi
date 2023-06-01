@@ -4,8 +4,8 @@
 #include <ApiLoaders/HermesApi.h>
 #include <ApiLoaders/V8Api.h>
 #include <NodeApiJsiRuntime.h>
+#include <jsi/test/testlib.h>
 #include <vector>
-#include "../jsi/test/testlib.h"
 
 using namespace Microsoft::NodeApiJsi;
 

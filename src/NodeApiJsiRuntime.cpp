@@ -13,6 +13,30 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// JSI version defines set of features available in the API.
+// Each significant API change must be under a new version.
+// These macros must be defined in jsi.h, but define them here too
+// in case if this code is used with unmodified jsi.h.
+#ifndef JSI_VERSION
+#define JSI_VERSION 10
+#endif
+
+#ifndef JSI_NO_CONST_3
+#if JSI_VERSION >= 3
+#define JSI_NO_CONST_3
+#else
+#define JSI_NO_CONST_3 const
+#endif
+#endif
+
+#ifndef JSI_CONST_10
+#if JSI_VERSION >= 10
+#define JSI_CONST_10 const
+#else
+#define JSI_CONST_10
+#endif
+#endif
+
 using namespace facebook;
 using namespace std::string_view_literals;
 
@@ -1858,7 +1882,7 @@ size_t NodeApiJsiRuntime::JsiValueViewArgs::size() const noexcept {
 
 // TODO: account for symbol
 NodeApiJsiRuntime::PropNameIDView::PropNameIDView(NodeApiJsiRuntime * /*runtime*/, napi_value propertyId) noexcept
-    : propertyId_{make<jsi::PropNameID>(new (std::addressof(
+    : propertyId_{make<jsi::PropNameID>(new(std::addressof(
           pointerStore_)) NodeApiStackOnlyPointerValue(propertyId, NodeApiPointerValueKind::StringPropNameID))} {}
 
 NodeApiJsiRuntime::PropNameIDView::operator jsi::PropNameID const &() const noexcept {
