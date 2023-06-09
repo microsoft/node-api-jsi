@@ -40,7 +40,7 @@ endif()
 execute_process(
   COMMAND ${NUGET_EXE}
     install "Microsoft.JavaScript.Hermes"
-    -Version 0.1.12
+    -Version 0.1.13
     -ExcludeVersion
     -OutputDirectory ${CMAKE_BINARY_DIR}/packages
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
