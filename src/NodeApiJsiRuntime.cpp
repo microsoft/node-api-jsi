@@ -101,13 +101,15 @@ using std::span;
 /**
  * @brief A span of values that can be used to pass arguments to a function.
  *
- * This should be replaced with std::span once C++ 2020 is supported.
+ * This should be replaced with std::span once C++20 is supported.
  */
 template <typename T>
 class span {
  public:
-  constexpr span(std::initializer_list<T> il) noexcept : data_{const_cast<T *>(il.begin())}, size_{il.size()} {}
+  constexpr span() noexcept : data_{nullptr}, size_{0} {}
   constexpr span(T *data, size_t size) noexcept : data_{data}, size_{size} {}
+  template <std::size_t N>
+  constexpr span(T (&arr)[N]) noexcept : data_{arr}, size_{N} {}
 
   [[nodiscard]] constexpr T *data() const noexcept {
     return data_;
@@ -1272,8 +1274,8 @@ jsi::Object NodeApiJsiRuntime::createObject(std::shared_ptr<jsi::HostObject> hos
         getProperty(getNodeApiValue(cachedValue_.Global), getNodeApiValue(propertyId_.Proxy)),
         NodeApiPointerValueKind::Object);
   }
-  napi_value proxy =
-      constructObject(getNodeApiValue(cachedValue_.ProxyConstructor), {obj, getHostObjectProxyHandler()});
+  napi_value args[] = {obj, getHostObjectProxyHandler()};
+  napi_value proxy = constructObject(getNodeApiValue(cachedValue_.ProxyConstructor), args);
   return makeJsiPointer<jsi::Object>(proxy);
 }
 
@@ -2189,14 +2191,14 @@ std::string NodeApiJsiRuntime::symbolToStdString(napi_value symbolValue) {
 // Calls a JavaScript function.
 napi_value NodeApiJsiRuntime::callFunction(napi_value thisArg, napi_value function, span<napi_value> args) const {
   napi_value result{};
-  CHECK_NAPI(jsrApi_->napi_call_function(env_, thisArg, function, args.size(), args.begin(), &result));
+  CHECK_NAPI(jsrApi_->napi_call_function(env_, thisArg, function, args.size(), args.data(), &result));
   return result;
 }
 
 // Constructs a new JavaScript Object using a constructor function.
 napi_value NodeApiJsiRuntime::constructObject(napi_value constructor, span<napi_value> args) const {
   napi_value result{};
-  CHECK_NAPI(jsrApi_->napi_new_instance(env_, constructor, args.size(), args.begin(), &result));
+  CHECK_NAPI(jsrApi_->napi_new_instance(env_, constructor, args.size(), args.data(), &result));
   return result;
 }
 
