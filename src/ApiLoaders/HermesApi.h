@@ -43,6 +43,7 @@ class HermesApi : public JSRuntimeApi {
 
  public:
 #define HERMES_FUNC(func) decltype(::func) *const func;
+#define HERMES_INSPECTOR_FUNC(func) HERMES_FUNC(func)
 #include "HermesApi.inc"
 
  private:
