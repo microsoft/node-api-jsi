@@ -40,7 +40,7 @@ endif()
 execute_process(
   COMMAND ${NUGET_EXE}
     install "Microsoft.JavaScript.Hermes"
-    -Version 0.1.14
+    -Version 0.1.18
     -ExcludeVersion
     -OutputDirectory ${CMAKE_BINARY_DIR}/packages
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -50,7 +50,7 @@ target_link_libraries(jsi_tests PRIVATE ${CMAKE_BINARY_DIR}/packages/Microsoft.J
 execute_process(
   COMMAND ${NUGET_EXE}
     install "ReactNative.V8Jsi.Windows"
-    -Version 0.71.5
+    -Version 0.71.12
     -ExcludeVersion
     -OutputDirectory ${CMAKE_BINARY_DIR}/packages
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

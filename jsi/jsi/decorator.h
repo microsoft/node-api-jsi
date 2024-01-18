@@ -262,6 +262,12 @@ class RuntimeDecorator : public Base, private jsi::Instrumentation {
   }
 #endif
 
+#if JSI_VERSION >= 11
+  void setExternalMemoryPressure(const Object& obj, size_t amt) override {
+    plain_.setExternalMemoryPressure(obj, amt);
+  }
+#endif
+
   Value getProperty(const Object& o, const PropNameID& name) override {
     return plain_.getProperty(o, name);
   };
