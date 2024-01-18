@@ -285,6 +285,10 @@ class NodeApiJsiRuntime : public jsi::Runtime {
 
   bool instanceOf(const jsi::Object &obj, const jsi::Function &func) override;
 
+#if JSI_VERSION >= 11
+  void setExternalMemoryPressure(const jsi::Object &obj, size_t amount) override;
+#endif
+
  private:
   // RAII class to open and close the environment scope.
   class NodeApiScope {
@@ -1567,6 +1571,12 @@ bool NodeApiJsiRuntime::instanceOf(const jsi::Object &obj, const jsi::Function &
   NodeApiScope scope{*this};
   return instanceOf(getNodeApiValue(obj), getNodeApiValue(func));
 }
+
+#if JSI_VERSION >= 11
+void NodeApiJsiRuntime::setExternalMemoryPressure(const jsi::Object &obj, size_t amount) {
+  // TODO: implement
+}
+#endif
 
 //=====================================================================================================================
 // NodeApiJsiRuntime::NodeApiScope implementation
