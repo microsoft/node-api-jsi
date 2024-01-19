@@ -1573,7 +1573,7 @@ bool NodeApiJsiRuntime::instanceOf(const jsi::Object &obj, const jsi::Function &
 }
 
 #if JSI_VERSION >= 11
-void NodeApiJsiRuntime::setExternalMemoryPressure(const jsi::Object &obj, size_t amount) {
+void NodeApiJsiRuntime::setExternalMemoryPressure(const jsi::Object &/*obj*/, size_t /*amount*/) {
   // TODO: implement
 }
 #endif
