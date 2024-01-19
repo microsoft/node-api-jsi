@@ -1448,7 +1448,7 @@ TEST_P(JSITest, ArrayBufferSizeTest) {
   try {
     // Ensure we can safely write some data to the buffer.
     memset(ab.data(rt), 0xab, 10);
-  } catch (const JSINativeException& ex) {
+  } catch (const JSINativeException&) {
     // data() is unimplemented by some runtimes, ignore such failures.
   }
 
