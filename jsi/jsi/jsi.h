@@ -30,7 +30,7 @@
 // JSI version defines set of features available in the API.
 // Each significant API change must be under a new version.
 #ifndef JSI_VERSION
-#define JSI_VERSION 11
+#define JSI_VERSION 12
 #endif
 
 #if JSI_VERSION >= 3
@@ -233,6 +233,14 @@ class JSI_EXPORT Runtime {
   virtual Value evaluatePreparedJavaScript(
       const std::shared_ptr<const PreparedJavaScript>& js) = 0;
 
+#if JSI_VERSION >= 12
+  /// Queues a microtask in the JavaScript VM internal Microtask (a.k.a. Job in
+  /// ECMA262) queue, to be executed when the host drains microtasks in
+  /// its event loop implementation.
+  ///
+  /// \param callback a function to be executed as a microtask.
+  virtual void queueMicrotask(const jsi::Function& callback) = 0;
+#endif
 #if JSI_VERSION >= 4
   /// Drain the JavaScript VM internal Microtask (a.k.a. Job in ECMA262) queue.
   ///
