@@ -49,6 +49,8 @@ JSR_API jsr_config_set_inspector_break_on_start(jsr_config config, bool value);
 
 JSR_API jsr_config_enable_gc_api(jsr_config config, bool value);
 
+JSR_API jsr_config_set_explicit_microtasks(jsr_config config, bool value);
+
 //=============================================================================
 // jsr_config task runner
 //=============================================================================
@@ -128,8 +130,7 @@ JSR_API jsr_close_napi_env_scope(napi_env env, jsr_napi_env_scope scope);
 JSR_API jsr_get_description(napi_env env, const char** result);
 
 // To implement JSI queueMicrotask()
-JSR_API
-jsr_queue_microtask(napi_env env, napi_value callback);
+JSR_API jsr_queue_microtask(napi_env env, napi_value callback);
 
 // To implement JSI drainMicrotasks()
 JSR_API

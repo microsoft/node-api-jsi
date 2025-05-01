@@ -44,19 +44,23 @@ TEST_P(JSITest, PropNameIDTest) {
   EXPECT_TRUE(PropNameID::compare(rt, movedQuux, copiedQuux));
 
   EXPECT_TRUE(PropNameID::compare(rt, movedQuux, movedQuux));
-  EXPECT_TRUE(PropNameID::compare(
-      rt, movedQuux, PropNameID::forAscii(rt, std::string("quux2"))));
-  EXPECT_FALSE(PropNameID::compare(
-      rt, movedQuux, PropNameID::forAscii(rt, std::string("foo"))));
+  EXPECT_TRUE(
+      PropNameID::compare(
+          rt, movedQuux, PropNameID::forAscii(rt, std::string("quux2"))));
+  EXPECT_FALSE(
+      PropNameID::compare(
+          rt, movedQuux, PropNameID::forAscii(rt, std::string("foo"))));
   uint8_t utf8[] = {0xF0, 0x9F, 0x86, 0x97};
   PropNameID utf8PropNameID = PropNameID::forUtf8(rt, utf8, sizeof(utf8));
   EXPECT_EQ(
       utf8PropNameID.utf8(rt), reinterpret_cast<const char*>(u8"\U0001F197"));
-  EXPECT_TRUE(PropNameID::compare(
-      rt, utf8PropNameID, PropNameID::forUtf8(rt, utf8, sizeof(utf8))));
+  EXPECT_TRUE(
+      PropNameID::compare(
+          rt, utf8PropNameID, PropNameID::forUtf8(rt, utf8, sizeof(utf8))));
   PropNameID nonUtf8PropNameID = PropNameID::forUtf8(rt, "meow");
-  EXPECT_TRUE(PropNameID::compare(
-      rt, nonUtf8PropNameID, PropNameID::forAscii(rt, "meow")));
+  EXPECT_TRUE(
+      PropNameID::compare(
+          rt, nonUtf8PropNameID, PropNameID::forAscii(rt, "meow")));
   EXPECT_EQ(nonUtf8PropNameID.utf8(rt), "meow");
   PropNameID strPropNameID =
       PropNameID::forString(rt, String::createFromAscii(rt, "meow"));
@@ -149,11 +153,12 @@ TEST_P(JSITest, ObjectTest) {
   obj.setProperty(rt, "oprop", oprop);
   obj.setProperty(rt, "aprop", Array(rt, 1));
 
-  EXPECT_TRUE(function("function (obj) { return "
-                       "obj.roses == 'red' && "
-                       "obj['violets'] == 'blue' && "
-                       "typeof obj.oprop == 'object' && "
-                       "Array.isArray(obj.aprop); }")
+  EXPECT_TRUE(function(
+                  "function (obj) { return "
+                  "obj.roses == 'red' && "
+                  "obj['violets'] == 'blue' && "
+                  "typeof obj.oprop == 'object' && "
+                  "Array.isArray(obj.aprop); }")
                   .call(rt, obj)
                   .getBool());
 
@@ -196,7 +201,7 @@ TEST_P(JSITest, HostObjectTest) {
   EXPECT_TRUE(cho.getHostObject<ConstantHostObject>(rt).get() != nullptr);
 
   struct SameRuntimeHostObject : HostObject {
-    SameRuntimeHostObject(Runtime& rt) : rt_(rt){};
+    SameRuntimeHostObject(Runtime& rt) : rt_(rt) {};
 
     Value get(Runtime& rt, const PropNameID& sym) override {
       EXPECT_EQ(&rt, &rt_);
@@ -680,14 +685,15 @@ TEST_P(JSITest, HostFunctionTest) {
   EXPECT_TRUE(eval("cons.length == 2").getBool());
   EXPECT_TRUE(eval("cons instanceof Function").getBool());
 
-  EXPECT_TRUE(eval("(function() {"
-                   "  try {"
-                   "    cons('fail'); return false;"
-                   "  } catch (e) {"
-                   "    return ((e instanceof Error) &&"
-                   "            (e.message == 'Exception in HostFunction: ' +"
-                   "                          'expected 2 args'));"
-                   "  }})()")
+  EXPECT_TRUE(eval(
+                  "(function() {"
+                  "  try {"
+                  "    cons('fail'); return false;"
+                  "  } catch (e) {"
+                  "    return ((e instanceof Error) &&"
+                  "            (e.message == 'Exception in HostFunction: ' +"
+                  "                          'expected 2 args'));"
+                  "  }})()")
                   .getBool());
 
   Function coolify = Function::createFromHostFunction(
@@ -704,10 +710,11 @@ TEST_P(JSITest, HostFunctionTest) {
   EXPECT_TRUE(eval("coolify.name == 'coolify'").getBool());
   EXPECT_TRUE(eval("coolify.length == 0").getBool());
   EXPECT_TRUE(eval("coolify.bind('R&M')() == 'R&M is cool'").getBool());
-  EXPECT_TRUE(eval("(function() {"
-                   "  var s = coolify.bind(function(){})();"
-                   "  return s.lastIndexOf(' is cool') == (s.length - 8);"
-                   "})()")
+  EXPECT_TRUE(eval(
+                  "(function() {"
+                  "  var s = coolify.bind(function(){})();"
+                  "  return s.lastIndexOf(' is cool') == (s.length - 8);"
+                  "})()")
                   .getBool());
 
   Function lookAtMe = Function::createFromHostFunction(
@@ -754,8 +761,12 @@ TEST_P(JSITest, HostFunctionTest) {
           .getString(rt)
           .utf8(rt),
       "A cat was called with std::function::target");
-  EXPECT_TRUE(callable.isHostFunction(rt));
-  EXPECT_TRUE(callable.getHostFunction(rt).target<Callable>() != nullptr);
+// Disabling these tests for V8 because we'd incur unnecessary cost to implement
+// the functionality
+#if 0
+   EXPECT_TRUE(callable.isHostFunction(rt));
+   EXPECT_TRUE(callable.getHostFunction(rt).target<Callable>() != nullptr);
+#endif
 
   std::string strval = "strval1";
   auto getter = Object(rt);
@@ -836,14 +847,15 @@ TEST_P(JSITest, ValueTest) {
   uint8_t utf8[] = "[null, 2, \"c\", \"emoji: \xf0\x9f\x86\x97\", {}]";
 
   EXPECT_TRUE(
-      function("function (arr) { return "
-               "Array.isArray(arr) && "
-               "arr.length == 5 && "
-               "arr[0] === null && "
-               "arr[1] == 2 && "
-               "arr[2] == 'c' && "
-               "arr[3] == 'emoji: \\uD83C\\uDD97' && "
-               "typeof arr[4] == 'object'; }")
+      function(
+          "function (arr) { return "
+          "Array.isArray(arr) && "
+          "arr.length == 5 && "
+          "arr[0] === null && "
+          "arr[1] == 2 && "
+          "arr[2] == 'c' && "
+          "arr[3] == 'emoji: \\uD83C\\uDD97' && "
+          "typeof arr[4] == 'object'; }")
           .call(rt, Value::createFromJsonUtf8(rt, utf8, sizeof(utf8) - 1))
           .getBool());
 
@@ -885,14 +897,16 @@ TEST_P(JSITest, EqualsTest) {
   EXPECT_TRUE(Value::strictEquals(rt, nullptr, nullptr));
   EXPECT_TRUE(Value::strictEquals(rt, Value::undefined(), Value()));
   EXPECT_TRUE(Value::strictEquals(rt, rt.global(), Value(rt.global())));
-  EXPECT_FALSE(Value::strictEquals(
-      rt,
-      std::numeric_limits<double>::quiet_NaN(),
-      std::numeric_limits<double>::quiet_NaN()));
-  EXPECT_FALSE(Value::strictEquals(
-      rt,
-      std::numeric_limits<double>::signaling_NaN(),
-      std::numeric_limits<double>::signaling_NaN()));
+  EXPECT_FALSE(
+      Value::strictEquals(
+          rt,
+          std::numeric_limits<double>::quiet_NaN(),
+          std::numeric_limits<double>::quiet_NaN()));
+  EXPECT_FALSE(
+      Value::strictEquals(
+          rt,
+          std::numeric_limits<double>::signaling_NaN(),
+          std::numeric_limits<double>::signaling_NaN()));
   EXPECT_TRUE(Value::strictEquals(rt, +0.0, -0.0));
   EXPECT_TRUE(Value::strictEquals(rt, -0.0, +0.0));
 
@@ -1038,8 +1052,9 @@ TEST_P(JSITest, JSErrorDoesNotInfinitelyRecurse) {
     return rt.global().getPropertyAsObject(rt, "NotAProperty");
   };
   EXPECT_EQ(
-      function("function (f) { try { f(); return 'undefined'; }"
-               "catch (e) { return typeof e; } }")
+      function(
+          "function (f) { try { f(); return 'undefined'; }"
+          "catch (e) { return typeof e; } }")
           .call(
               rt,
               Function::createFromHostFunction(
@@ -1050,31 +1065,32 @@ TEST_P(JSITest, JSErrorDoesNotInfinitelyRecurse) {
 
   rt.global().setProperty(rt, "Error", globalError);
 }
-
-//TODO: fix
-// TEST_P(JSITest, JSErrorStackOverflowHandling) {
-//   rt.global().setProperty(
-//       rt,
-//       "callSomething",
-//       Function::createFromHostFunction(
-//           rt,
-//           PropNameID::forAscii(rt, "callSomething"),
-//           0,
-//           [this](
-//               Runtime& rt2,
-//               const Value& thisVal,
-//               const Value* args,
-//               size_t count) {
-//             EXPECT_EQ(&rt, &rt2);
-//             return function("function() { return 0; }").call(rt);
-//           }));
-//   try {
-//     eval("(function f() { callSomething(); f.apply(); })()");
-//     FAIL();
-//   } catch (const JSError& ex) {
-//     EXPECT_NE(std::string(ex.what()).find("exceeded"), std::string::npos);
-//   }
-// }
+// TODO: (vmoroz) Restore after JSI for Node-API is fixed.
+#if 0
+TEST_P(JSITest, JSErrorStackOverflowHandling) {
+  rt.global().setProperty(
+      rt,
+      "callSomething",
+      Function::createFromHostFunction(
+          rt,
+          PropNameID::forAscii(rt, "callSomething"),
+          0,
+          [this](
+              Runtime& rt2,
+              const Value& thisVal,
+              const Value* args,
+              size_t count) {
+            EXPECT_EQ(&rt, &rt2);
+            return function("function() { return 0; }").call(rt);
+          }));
+  try {
+    eval("(function f() { callSomething(); f.apply(); })()");
+    FAIL();
+  } catch (const JSError& ex) {
+    EXPECT_NE(std::string(ex.what()).find("exceeded"), std::string::npos);
+  }
+}
+#endif
 
 TEST_P(JSITest, ScopeDoesNotCrashTest) {
   Scope scope(rt);
@@ -1280,18 +1296,21 @@ TEST_P(JSITest, SymbolTest) {
   EXPECT_EQ(eval("Symbol('sym')").getSymbol(rt).toString(rt), "Symbol(sym)");
 
   // EqualsTest
-  EXPECT_FALSE(Symbol::strictEquals(
-      rt,
-      eval("Symbol('a')").getSymbol(rt),
-      eval("Symbol('a')").getSymbol(rt)));
-  EXPECT_TRUE(Symbol::strictEquals(
-      rt,
-      eval("Symbol.for('a')").getSymbol(rt),
-      eval("Symbol.for('a')").getSymbol(rt)));
+  EXPECT_FALSE(
+      Symbol::strictEquals(
+          rt,
+          eval("Symbol('a')").getSymbol(rt),
+          eval("Symbol('a')").getSymbol(rt)));
+  EXPECT_TRUE(
+      Symbol::strictEquals(
+          rt,
+          eval("Symbol.for('a')").getSymbol(rt),
+          eval("Symbol.for('a')").getSymbol(rt)));
   EXPECT_FALSE(
       Value::strictEquals(rt, eval("Symbol('a')"), eval("Symbol('a')")));
-  EXPECT_TRUE(Value::strictEquals(
-      rt, eval("Symbol.for('a')"), eval("Symbol.for('a')")));
+  EXPECT_TRUE(
+      Value::strictEquals(
+          rt, eval("Symbol.for('a')"), eval("Symbol.for('a')")));
   EXPECT_FALSE(Value::strictEquals(rt, eval("Symbol('a')"), eval("'a'")));
 }
 
@@ -1302,13 +1321,15 @@ TEST_P(JSITest, JSErrorTest) {
   // Getting message property can throw
 
   EXPECT_THROW(
-      eval("var GetMessageThrows = {get message() { throw Error('ex'); }};"
-           "throw GetMessageThrows;"),
+      eval(
+          "var GetMessageThrows = {get message() { throw Error('ex'); }};"
+          "throw GetMessageThrows;"),
       JSIException);
 
   EXPECT_THROW(
-      eval("var GetMessageThrows = {get message() { throw GetMessageThrows; }};"
-           "throw GetMessageThrows;"),
+      eval(
+          "var GetMessageThrows = {get message() { throw GetMessageThrows; }};"
+          "throw GetMessageThrows;"),
       JSIException);
 
   // Converting exception message to String can throw
@@ -1331,18 +1352,20 @@ TEST_P(JSITest, JSErrorTest) {
       JSIException);
 
   EXPECT_THROW(
-      eval("var e = Error();"
-           "String = function() { throw Error('ctor'); };"
-           "throw e;"),
+      eval(
+          "var e = Error();"
+          "String = function() { throw Error('ctor'); };"
+          "throw e;"),
       JSIException);
 
   // Converting an exception message to String can return a non-String
 
   EXPECT_THROW(
-      eval("String = function() { return 42; };"
-           "var e = Error();"
-           "e.message = 17;"
-           "throw e;"),
+      eval(
+          "String = function() { return 42; };"
+          "var e = Error();"
+          "e.message = 17;"
+          "throw e;"),
       JSIException);
 
   // Exception can be non-Object
@@ -1354,8 +1377,9 @@ TEST_P(JSITest, JSErrorTest) {
   // Converting exception with no message or stack property to String can throw
 
   EXPECT_THROW(
-      eval("var e = {toString() { throw new Error('errstr'); }};"
-           "throw e;"),
+      eval(
+          "var e = {toString() { throw new Error('errstr'); }};"
+          "throw e;"),
       JSIException);
 }
 
@@ -1580,6 +1604,213 @@ TEST_P(JSITest, UTF8ExceptionTest) {
     EXPECT_NE(e.getMessage().find(utf8), std::string::npos);
   }
 }
+
+#if JSI_VERSION >= 14
+TEST_P(JSITest, UTF16ConversionTest) {
+  // This Runtime Decorator is used to test the conversion from UTF-8 to UTF-16
+  // in the default utf16 method for runtimes that do not provide their own
+  // utf16 implementation.
+  class UTF16RD : public RuntimeDecorator<Runtime, Runtime> {
+   public:
+    UTF16RD(Runtime& rt) : RuntimeDecorator(rt) {}
+
+    std::string utf8(const String&) override {
+      return utf8Str;
+    }
+
+    std::u16string utf16(const String& str) override {
+      return Runtime::utf16(str);
+    }
+
+    std::string utf8Str;
+  };
+
+  UTF16RD rd = UTF16RD(rt);
+  String str = String::createFromUtf8(rd, "placeholder");
+
+  rd.utf8Str = "foobar";
+  EXPECT_EQ(str.utf16(rd), u"foobar");
+
+  // 你 in UTF-8 encoding is 0xe4 0xbd 0xa0 and 好 is 0xe5 0xa5 0xbd
+  // 你 in UTF-16 encoding is 0x4f60 and 好 is 0x597d
+  rd.utf8Str = "\xe4\xbd\xa0\xe5\xa5\xbd";
+  EXPECT_EQ(str.utf16(rd), u"\x4f60\x597d");
+
+  // 👍 in UTF-8 encoding is 0xf0 0x9f 0x91 0x8d
+  // 👍 in UTF-16 encoding is 0xd83d 0xdc4d
+  rd.utf8Str = "\xf0\x9f\x91\x8d";
+  EXPECT_EQ(str.utf16(rd), u"\xd83d\xdc4d");
+
+  // String is foobar👍你好
+  rd.utf8Str = "foobar\xf0\x9f\x91\x8d\xe4\xbd\xa0\xe5\xa5\xbd";
+  EXPECT_EQ(str.utf16(rd), u"foobar\xd83d\xdc4d\x4f60\x597d");
+
+  // String ended before second byte of the encoding
+  rd.utf8Str = "\xcf";
+  EXPECT_EQ(str.utf16(rd), u"\uFFFD");
+
+  // Third byte should follow the pattern of 0b10xxxxxx
+  rd.utf8Str = "\xef\x8f\x29";
+  EXPECT_EQ(str.utf16(rd), u"\uFFFD\u0029");
+
+  // U+2200 should be encoded in 3 bytes as 0xE2 0x88 0x80, not 4 bytes
+  rd.utf8Str = "\xf0\x82\x88\x80";
+  EXPECT_EQ(str.utf16(rd), u"\uFFFD");
+
+  // Unicode Max Value is U+10FFFF, U+11FFFF is invalid
+  rd.utf8Str = "\xf4\x9f\xbf\xbf";
+  EXPECT_EQ(str.utf16(rd), u"\uFFFD");
+
+  // Missing the third byte of the 3-byte encoding, followed by 'z'
+  rd.utf8Str = "\xe1\xa0\x7a";
+  EXPECT_EQ(str.utf16(rd), u"\uFFFD\u007A");
+
+  // First byte is neither ASCII nor a valid continuation byte
+  rd.utf8Str = "\xea\x7a";
+  EXPECT_EQ(str.utf16(rd), u"\uFFFD\u007A");
+}
+#endif
+
+#if JSI_VERSION >= 19
+TEST_P(JSITest, CreateFromUtf16Test) {
+  // This Runtime Decorator is used to test the default createStringFromUtf16
+  // and createPropNameIDFromUtf16 implementation for VMs that do not provide
+  // their own implementation
+  class RD : public RuntimeDecorator<Runtime, Runtime> {
+   public:
+    RD(Runtime& rt) : RuntimeDecorator(rt) {}
+
+    String createStringFromUtf16(const char16_t* utf16, size_t length)
+        override {
+      return Runtime::createStringFromUtf16(utf16, length);
+    }
+
+    PropNameID createPropNameIDFromUtf16(const char16_t* utf16, size_t length)
+        override {
+      return Runtime::createPropNameIDFromUtf16(utf16, length);
+    }
+  };
+
+  RD rd = RD(rt);
+  std::u16string utf16 = u"foobar";
+
+  auto jsString = String::createFromUtf16(rd, utf16);
+  EXPECT_EQ(jsString.utf16(rd), utf16);
+  auto prop = PropNameID::forUtf16(rd, utf16);
+  EXPECT_EQ(prop.utf16(rd), utf16);
+
+  // 👋 in UTF-16 encoding is 0xd83d 0xdc4b
+  utf16 = u"hello!\xd83d\xdc4b";
+  jsString = String::createFromUtf16(rd, utf16.data(), utf16.length());
+  EXPECT_EQ(jsString.utf16(rd), utf16);
+  prop = PropNameID::forUtf16(rd, utf16);
+  EXPECT_EQ(prop.utf16(rd), utf16);
+
+  utf16 = u"\xd83d";
+  jsString = String::createFromUtf16(rd, utf16.data(), utf16.length());
+  /// We need to use charCodeAt instead of UTF16 because the default
+  /// implementation of UTF16 converts to UTF8, then to UTF16, so we will lose
+  /// the lone surrogate value.
+  rd.global().setProperty(rd, "loneSurrogate", jsString);
+  auto cp = eval("loneSurrogate.charCodeAt(0)").getNumber();
+  EXPECT_EQ(cp, 55357); // 0xD83D in decimal
+}
+#endif
+
+#if JSI_VERSION >= 16
+TEST_P(JSITest, GetStringDataTest) {
+  // This Runtime Decorator is used to test the default getStringData
+  // implementation for VMs that do not provide their own implementation
+  class RD : public RuntimeDecorator<Runtime, Runtime> {
+   public:
+    RD(Runtime& rt) : RuntimeDecorator(rt) {}
+
+    void getStringData(
+        const String& str,
+        void* ctx,
+        void (*cb)(void* ctx, bool ascii, const void* data, size_t num))
+        override {
+      Runtime::getStringData(str, ctx, cb);
+    }
+  };
+
+  RD rd = RD(rt);
+  // 👋 in UTF8 encoding is 0xf0 0x9f 0x91 0x8b
+  String str = String::createFromUtf8(rd, "hello\xf0\x9f\x91\x8b");
+
+  std::u16string buf;
+  auto cb = [&buf](bool ascii, const void* data, size_t num) {
+    assert(!ascii && "Default implementation is always utf16");
+    buf.append((const char16_t*)data, num);
+  };
+
+  str.getStringData(rd, cb);
+  EXPECT_EQ(buf, str.utf16(rd));
+}
+#endif
+
+#if JSI_VERSION >= 17
+TEST_P(JSITest, ObjectSetPrototype) {
+  // This Runtime Decorator is used to test the default implementation of
+  // Object.setPrototypeOf
+  class RD : public RuntimeDecorator<Runtime, Runtime> {
+   public:
+    explicit RD(Runtime& rt) : RuntimeDecorator(rt) {}
+
+    void setPrototypeOf(const Object& object, const Value& prototype) override {
+      return Runtime::setPrototypeOf(object, prototype);
+    }
+
+    Value getPrototypeOf(const Object& object) override {
+      return Runtime::getPrototypeOf(object);
+    }
+  };
+
+  RD rd = RD(rt);
+  Object child(rd);
+
+  // Tests null value as prototype
+  child.setPrototype(rd, Value::null());
+  EXPECT_TRUE(child.getPrototype(rd).isNull());
+
+  Object prototypeObj(rd);
+  prototypeObj.setProperty(rd, "someProperty", 123);
+  Value prototype(rd, prototypeObj);
+
+  child.setPrototype(rd, prototype);
+  EXPECT_EQ(child.getProperty(rd, "someProperty").getNumber(), 123);
+
+  auto getPrototypeRes = child.getPrototype(rd).asObject(rd);
+  EXPECT_EQ(getPrototypeRes.getProperty(rd, "someProperty").getNumber(), 123);
+}
+#endif
+
+#if JSI_VERSION >= 18
+TEST_P(JSITest, ObjectCreateWithPrototype) {
+  // This Runtime Decorator is used to test the default implementation of
+  // Object.create(prototype)
+  class RD : public RuntimeDecorator<Runtime, Runtime> {
+   public:
+    RD(Runtime& rt) : RuntimeDecorator(rt) {}
+
+    Object createObjectWithPrototype(const Value& prototype) override {
+      return Runtime::createObjectWithPrototype(prototype);
+    }
+  };
+
+  RD rd = RD(rt);
+  Object prototypeObj(rd);
+  prototypeObj.setProperty(rd, "someProperty", 123);
+  Value prototype(rd, prototypeObj);
+
+  Object child = Object::create(rd, prototype);
+  EXPECT_EQ(child.getProperty(rd, "someProperty").getNumber(), 123);
+
+  // Tests null value as prototype
+  child = Object::create(rd, Value::null());
+  EXPECT_TRUE(child.getPrototype(rd).isNull());
+}
+#endif
 
 INSTANTIATE_TEST_CASE_P(
     Runtimes,
