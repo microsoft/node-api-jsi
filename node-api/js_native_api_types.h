@@ -7,6 +7,11 @@
 #include <stddef.h>  // NOLINT(modernize-deprecated-headers)
 #include <stdint.h>  // NOLINT(modernize-deprecated-headers)
 
+// TODO: (vmoroz) NODE_API_EXPERIMENTAL_NOGC_ENV_OPT_OUT is not part of this
+// Node-API file. It is here temporary to enable compilation. Remove it after
+// updating tests.
+#define NODE_API_EXPERIMENTAL_NOGC_ENV_OPT_OUT
+
 #if !defined __cplusplus || (defined(_MSC_VER) && _MSC_VER < 1900)
 typedef uint16_t char16_t;
 #endif
