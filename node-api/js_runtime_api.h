@@ -4,7 +4,7 @@
 #ifndef SRC_JS_RUNTIME_API_H_
 #define SRC_JS_RUNTIME_API_H_
 
-#include "js_native_api.h"
+#include "node_api.h"
 
 //
 // Node-API extensions required for JavaScript engine hosting.
@@ -50,6 +50,16 @@ JSR_API jsr_config_set_inspector_break_on_start(jsr_config config, bool value);
 JSR_API jsr_config_enable_gc_api(jsr_config config, bool value);
 
 JSR_API jsr_config_set_explicit_microtasks(jsr_config config, bool value);
+
+// A callback to process unhandled JS error
+typedef void(NAPI_CDECL* jsr_unhandled_error_cb)(void* cb_data,
+                                                 napi_env env,
+                                                 napi_value error);
+
+JSR_API jsr_config_on_unhandled_error(
+    jsr_config config,
+    void* cb_data,
+    jsr_unhandled_error_cb unhandled_error_cb);
 
 //=============================================================================
 // jsr_config task runner
@@ -187,12 +197,17 @@ JSR_API jsr_get_and_clear_last_unhandled_promise_rejection(napi_env env,
                                                            napi_value* result);
 
 // Create new napi_env for the runtime.
-JSR_API jsr_create_node_api_env(napi_env root_env,
-                                int32_t api_version,
-                                napi_env* env);
+JSR_API
+jsr_create_node_api_env(napi_env root_env, int32_t api_version, napi_env* env);
 
 // Run task in the environment context.
 JSR_API jsr_run_task(napi_env env, jsr_task_run_cb task_cb, void* data);
+
+// Initializes native module.
+JSR_API jsr_initialize_native_module(napi_env env,
+                                     napi_addon_register_func register_module,
+                                     int32_t api_version,
+                                     napi_value* exports);
 
 EXTERN_C_END
 
