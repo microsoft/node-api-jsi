@@ -44,12 +44,21 @@ using namespace std::string_view_literals;
 // We use macros to report errors.
 // Macros provide more flexibility to show assert and provide failure context.
 
+#if defined(__clang__) || defined(__GNUC__)
+#define CRASH_NOW() __builtin_trap()
+#elif defined(_MSC_VER)
+#include <intrin.h>
+#define CRASH_NOW() __fastfail(/*FAST_FAIL_FATAL_APP_EXIT*/ 7)
+#else
+#define CRASH_NOW() *((volatile int *)0) = 1
+#endif
+
 // Check condition and crash process if it fails.
 #define CHECK_ELSE_CRASH(condition, message)               \
   do {                                                     \
     if (!(condition)) {                                    \
       assert(false && "Failed: " #condition && (message)); \
-      *((int *)0) = 1;                                     \
+      CRASH_NOW();                                         \
     }                                                      \
   } while (false)
 
@@ -286,7 +295,7 @@ class NodeApiJsiRuntime : public jsi::Runtime {
   jsi::Array createArray(size_t length) override;
 #if JSI_VERSION >= 9
   jsi::ArrayBuffer createArrayBuffer(
-      std::shared_ptr<jsi::MutableBuffer> buffer);
+      std::shared_ptr<jsi::MutableBuffer> buffer) override;
 #endif
   size_t size(const jsi::Array &arr) override;
   size_t size(const jsi::ArrayBuffer &arrBuf) override;
@@ -1628,8 +1637,8 @@ jsi::Object NodeApiJsiRuntime::createObject(
   // access to the hostObject's get, set, and getPropertyNames methods. There is
   // a special symbol property ID, 'hostObjectSymbol', used to access the
   // hostObjectWrapper from the Proxy.
-  napi_value hostObjectHolder =
-      createExternalObject(std::make_unique<std::shared_ptr<jsi::HostObject>>(
+  napi_value hostObjectHolder = createExternalObject(
+      std::make_unique<std::shared_ptr<jsi::HostObject>>(
           std::move(hostObject)));
   napi_value obj = createNodeApiObject();
   setProperty(
@@ -2420,31 +2429,89 @@ jsi::JSError NodeApiJsiRuntime::makeJSError(Args &&...args) {
   return jsi::JSError(*this, errorStream.str());
 }
 
-// Throws jsi::JSError or jsi::JSINativeException from Node-API error.
 [[noreturn]] void NodeApiJsiRuntime::throwJSException(
     napi_status status) const {
+  auto formatStatusError = [](napi_status status) -> std::string {
+    // TODO: (vmoroz) use a more sophisticated error formatting.
+    std::ostringstream errorStream;
+    errorStream << "A call to Node-API returned error code 0x" << std::hex
+                << static_cast<int>(status) << '.';
+    return errorStream.str();
+  };
+
+  NodeApiScope scope{*this};
+  // Retrieve the exception value and clear as we will rethrow it as a C++
+  // exception.
   napi_value jsError{};
   CHECK_NAPI_ELSE_CRASH(
       jsrApi_->napi_get_and_clear_last_exception(env_, &jsError));
   napi_valuetype jsErrorType;
   CHECK_NAPI_ELSE_CRASH(jsrApi_->napi_typeof(env_, jsError, &jsErrorType));
-
-  if (!hasPendingJSError_ &&
-      (status == napi_pending_exception || jsErrorType != napi_undefined)) {
-    AutoRestore<bool> setValue(
-        const_cast<NodeApiJsiRuntime *>(this)->hasPendingJSError_, true);
-    if (jsErrorType == napi_object &&
-        instanceOf(jsError, getNodeApiValue(cachedValue_.Error))) {
-      rewriteErrorMessage(jsError);
-    }
-    throw jsi::JSError(
-        *const_cast<NodeApiJsiRuntime *>(this), toJsiValue(jsError));
-  } else {
-    std::ostringstream errorStream;
-    errorStream << "A call to Node-API returned error code 0x" << std::hex
-                << status << '.';
-    throw jsi::JSINativeException(errorStream.str().c_str());
+  if (jsErrorType == napi_undefined) {
+    throw jsi::JSINativeException(formatStatusError(status).c_str());
   }
+  jsi::Value jsiJSError = toJsiValue(jsError);
+
+  std::string msg = "No message";
+  std::string stack = "No stack";
+  if (jsErrorType == napi_string) {
+    // If the exception is a string, use it as the message.
+    msg = stringToStdString(jsError);
+  } else if (jsErrorType == napi_object) {
+    // If the exception is an object try to retrieve its message and stack
+    // properties.
+
+    /// Attempt to retrieve a string property \p sym from \c jsError and store
+    /// it in \p out. Ignore any catchable errors and non-string properties.
+    auto getStrProp = [this, jsError](const char *sym, std::string &out) {
+      napi_value value{};
+      napi_status propStatus =
+          jsrApi_->napi_get_named_property(env_, jsError, sym, &value);
+      if (propStatus != napi_ok) {
+        // An exception was thrown while retrieving the property, if it is
+        // catchable, suppress it. Otherwise, rethrow this exception without
+        // trying to invoke any more JavaScript.
+        napi_value newJSError{};
+        CHECK_NAPI_ELSE_CRASH(
+            jsrApi_->napi_get_and_clear_last_exception(env_, &newJSError));
+        napi_valuetype newJSErrorType;
+        CHECK_NAPI_ELSE_CRASH(
+            jsrApi_->napi_typeof(env_, newJSError, &newJSErrorType));
+
+        if (propStatus != napi_cannot_run_js)
+          return;
+
+        // An uncatchable error occurred, it is unsafe to do anything that
+        // might execute more JavaScript.
+        if (newJSErrorType != napi_undefined) {
+          throw jsi::JSError(
+              toJsiValue(newJSError),
+              "Uncatchable exception thrown while creating error",
+              "No stack");
+        } else {
+          std::ostringstream errorStream;
+          errorStream << "A call to Node-API returned error code 0x" << std::hex
+                      << propStatus << '.';
+          throw jsi::JSINativeException(errorStream.str().c_str());
+        }
+      }
+
+      // If the property is a string, update out. Otherwise ignore it.
+      napi_valuetype valueType;
+      CHECK_NAPI_ELSE_CRASH(jsrApi_->napi_typeof(env_, value, &valueType));
+      if (valueType == napi_string) {
+        out = stringToStdString(value);
+      }
+    };
+
+    getStrProp("message", msg);
+    getStrProp("stack", stack);
+  }
+
+  // Use the constructor of jsi::JSError that cannot run additional
+  // JS, since that may then result in additional exceptions and infinite
+  // recursion.
+  throw jsi::JSError(std::move(jsiJSError), msg, stack);
 }
 
 // Throws jsi::JSINativeException with a message.
@@ -2467,7 +2534,9 @@ void NodeApiJsiRuntime::rewriteErrorMessage(napi_value jsError) const {
     jsrApi_->napi_get_and_clear_last_exception(env_, &ignoreJSError);
   } else if (typeOf(message) == napi_string) {
     // JSI unit tests expect V8- or JSC-like messages for the stack overflow.
-    if (stringToStdString(message) == "Out of stack space") {
+    std::string messageStr = stringToStdString(message);
+    if (messageStr == "Out of stack space" ||
+        messageStr.find("Maximum call stack") != std::string::npos) {
       setProperty(
           jsError,
           getNodeApiValue(propertyId_.message),
@@ -2594,7 +2663,7 @@ napi_value NodeApiJsiRuntime::getBoolean(bool value) const {
 
 // Gets value of the Boolean napi_value.
 bool NodeApiJsiRuntime::getValueBool(napi_value value) const {
-  bool result{nullptr};
+  bool result{false};
   CHECK_NAPI(jsrApi_->napi_get_value_bool(env_, value, &result));
   return result;
 }
@@ -2848,13 +2917,14 @@ void NodeApiJsiRuntime::setElement(
     napi_callback_info info) noexcept {
   HostFunctionWrapper *hostFuncWrapper{};
   size_t argc{};
-  CHECK_NAPI_ELSE_CRASH(JSRuntimeApi::current()->napi_get_cb_info(
-      env,
-      info,
-      &argc,
-      nullptr,
-      nullptr,
-      reinterpret_cast<void **>(&hostFuncWrapper)));
+  CHECK_NAPI_ELSE_CRASH(
+      JSRuntimeApi::current()->napi_get_cb_info(
+          env,
+          info,
+          &argc,
+          nullptr,
+          nullptr,
+          reinterpret_cast<void **>(&hostFuncWrapper)));
   CHECK_ELSE_CRASH(hostFuncWrapper, "Cannot find the host function");
   NodeApiJsiRuntime &runtime = hostFuncWrapper->runtime();
   NodeApiPointerValueScope scope{runtime};
@@ -2863,8 +2933,9 @@ void NodeApiJsiRuntime::setElement(
       [&env, &info, &argc, &runtime, &hostFuncWrapper]() {
         SmallBuffer<napi_value, MaxStackArgCount> napiArgs(argc);
         napi_value thisArg{};
-        CHECK_NAPI_ELSE_CRASH(JSRuntimeApi::current()->napi_get_cb_info(
-            env, info, &argc, napiArgs.data(), &thisArg, nullptr));
+        CHECK_NAPI_ELSE_CRASH(
+            JSRuntimeApi::current()->napi_get_cb_info(
+                env, info, &argc, napiArgs.data(), &thisArg, nullptr));
         CHECK_ELSE_CRASH(napiArgs.size() == argc, "Wrong argument count");
         const JsiValueView jsiThisArg{&runtime, thisArg};
         JsiValueViewArgs jsiArgs(
@@ -2986,13 +3057,14 @@ void NodeApiJsiRuntime::setProxyTrap(
     NodeApiJsiRuntime *runtime{};
     napi_value args[argCount]{};
     size_t actualArgCount{argCount};
-    CHECK_NAPI_ELSE_CRASH(JSRuntimeApi::current()->napi_get_cb_info(
-        env,
-        info,
-        &actualArgCount,
-        args,
-        nullptr,
-        reinterpret_cast<void **>(&runtime)));
+    CHECK_NAPI_ELSE_CRASH(
+        JSRuntimeApi::current()->napi_get_cb_info(
+            env,
+            info,
+            &actualArgCount,
+            args,
+            nullptr,
+            reinterpret_cast<void **>(&runtime)));
     CHECK_ELSE_CRASH(
         actualArgCount == argCount, "proxy trap requires argCount arguments.");
     NodeApiPointerValueScope scope{*runtime};
