@@ -364,11 +364,11 @@ class RuntimeDecorator : public Base, private jsi::Instrumentation {
       const PropNameID& name,
       const Value& value) override {
     plain_.setPropertyValue(o, name, value);
+  }
   void setPropertyValue(
       JSI_CONST_10 Object& o,
       const String& name,
       const Value& value) override {
-  }
     plain_.setPropertyValue(o, name, value);
   }
 
