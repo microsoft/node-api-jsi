@@ -1513,8 +1513,8 @@ inline uint32_t constexpr maxCharsPerDigitInRadix(int32_t radix) {
   // With minNumBitsPerChar being the lower bound estimate of how many bits each
   // char can represent, the upper bound of how many chars "fit" in a bigint
   // digit is ceil(sizeofInBits(bigint digit) / minNumBitsPerChar).
-  uint32_t numCharsPerDigits =
-      static_cast<uint32_t>(sizeof(uint64_t)) / (1 << minNumBitsPerChar);
+  constexpr uint32_t bitsPerDigit = sizeof(uint64_t) * 8;
+  uint32_t numCharsPerDigits = (bitsPerDigit + minNumBitsPerChar - 1) / minNumBitsPerChar;
 
   return numCharsPerDigits;
 }
@@ -1572,45 +1572,31 @@ jsi::String NodeApiJsiRuntime::bigintToString(
   // TODO: Add support for big-endian.
   uint32_t *halfWords = reinterpret_cast<uint32_t *>(words);
   size_t count = wordCount * 2;
-  for (size_t i = count; i > 0 && halfWords[i - 1] == 0; --i) {
+  while (count > 0 && halfWords[count - 1] == 0) {
     --count;
   }
 
   uint32_t divisor = static_cast<uint32_t>(radix);
-  uint32_t remainder = 0;
   uint64_t word0 = words[0];
 
   do {
-    // We rewrite the halfWords array as we divide it by radix.
+    uint32_t remainder = 0;
     if (count <= 2) {
-      remainder = word0 % divisor;
-      word0 = word0 / divisor;
+      remainder = static_cast<uint32_t>(word0 % divisor);
+      word0 /= divisor;
     } else {
+      // Divide the whole number in place by radix, from the most significant
+      // half-word to the least significant one.
       for (size_t i = count; i > 0; --i) {
         uint64_t partialDividend = Make_64(remainder, halfWords[i - 1]);
-        if (partialDividend == 0) {
-          halfWords[i] = 0;
-          remainder = 0;
-          if (i == count) {
-            if (--count == 2) {
-              word0 = words[0];
-            }
-          }
-        } else if (partialDividend < divisor) {
-          halfWords[i] = 0;
-          remainder = Lo_32(partialDividend);
-          if (i == count) {
-            if (--count == 2) {
-              word0 = words[0];
-            }
-          }
-        } else if (partialDividend == divisor) {
-          halfWords[i] = 1;
-          remainder = 0;
-        } else {
-          halfWords[i] = Lo_32(partialDividend / divisor);
-          remainder = Lo_32(partialDividend % divisor);
-        }
+        halfWords[i - 1] = Lo_32(partialDividend / divisor);
+        remainder = Lo_32(partialDividend % divisor);
+      }
+      while (count > 0 && halfWords[count - 1] == 0) {
+        --count;
+      }
+      if (count <= 2) {
+        word0 = words[0];
       }
     }
 
